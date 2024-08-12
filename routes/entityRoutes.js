@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Entity = require('../models/Entity');
+const Property = require('../models/Property');
 
 // Create
 router.post('/', async (req, res) => {
@@ -16,7 +17,7 @@ router.post('/', async (req, res) => {
 // Read (all)
 router.get('/', async (req, res) => {
   try {
-    const entities = await Entity.find();
+    const entities = await Entity.find().populate('properties');
     res.json(entities);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -26,7 +27,7 @@ router.get('/', async (req, res) => {
 // Read (one)
 router.get('/:id', async (req, res) => {
   try {
-    const entity = await Entity.findById(req.params.id);
+    const entity = await Entity.findById(req.params.id).populate('properties');
     if (!entity) return res.status(404).json({ message: 'Entity not found' });
     res.json(entity);
   } catch (error) {
@@ -48,8 +49,16 @@ router.put('/:id', async (req, res) => {
 // Delete
 router.delete('/:id', async (req, res) => {
   try {
-    const entity = await Entity.findByIdAndDelete(req.params.id);
+    const entity = await Entity.findById(req.params.id);
     if (!entity) return res.status(404).json({ message: 'Entity not found' });
+
+    // Remove references to this entity from associated properties
+    await Property.updateMany(
+      { entityId: entity._id },
+      { $unset: { entityId: "" } }
+    );
+
+    await Entity.findByIdAndDelete(req.params.id);
     res.json({ message: 'Entity deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
