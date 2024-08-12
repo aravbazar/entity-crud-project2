@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+
 const EntitySchema = new mongoose.Schema({
   name: String,
   contactEmail: String,
@@ -11,7 +12,9 @@ const EntitySchema = new mongoose.Schema({
   isPersonalEntity: String,
   willOwnProperty: String,
   hasSubscriptionAgreement: String,
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  properties: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Property' }]
+}, {
+  timestamps: true
 });
+
 module.exports = mongoose.model('Entity', EntitySchema);
